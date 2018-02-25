@@ -25,24 +25,23 @@ Processing code examples.
 Capture webcam;              // webcam input
 OpenCV cv;                   // instance of the OpenCV library
 
-float maxBlobWidth, maxBlobHeight;
-float minBlobWidth, minBlobHeight;
 float minBlobArea, maxBlobArea;
 float minBlobWidthHeightRatio;
 
+float blobWaveStep = 20;
+float numSteps = 4;
+
 void setup() {
     size(1280,720);
-    
+    colorMode(HSB);
     // create an instance of the OpenCV library
     // we'll pass each frame of video to it later
     // for processing
     cv = new OpenCV(this, width, height);
     
-    maxBlobWidth = width / 4;
-    maxBlobHeight = height / 4;
-    minBlobArea = (width * height) / 500;
+    minBlobArea = (width * height) / 1000;
     maxBlobArea = (width * height) / 8;
-    minBlobWidthHeightRatio = 0.5; // 0-1, square + circle have 1
+    minBlobWidthHeightRatio = 0.3; // 0-1, square + circle have 1
 
     println("MinArea", minBlobArea);
     println("MaxArea", maxBlobArea);
@@ -90,35 +89,53 @@ void draw() {
 
     for (Contour blob: blobs) {
         Contour convexBlob = blob.getConvexHull();
-        if (filterBlob(blob)) {
-            convexBlobs.add(blob);
+        if (filterBlob(convexBlob)) {
+            convexBlobs.add(convexBlob);
         }
     }
 
     noFill();
-    stroke(255,150,0);
+    stroke(255,150,100);
     strokeWeight(3);
     int numBlobs = 0;
 
     for (Contour blob : convexBlobs) {
+        // Last minute filtering tyring to rid the world of blobs in blobs
         if (containsAnother(blob, convexBlobs)) {
-            println("Contains another ...");
+            println("Contains another");
             continue;
         }
 
         numBlobs++;
-
+        // println(blob.pointMat.size().height, blob.getBoundingBox().height);
+        // blob.setPolygonApproximationFactor(blob.pointMat.size().height * 0.5);
         ArrayList<PVector> blobPoints = blob.getPolygonApproximation().getPoints();
-      
+        ArrayList<PVector> blobUnitVectors = new ArrayList<PVector>(blobPoints.size());
+
         PVector centroid = getCentroid(blobPoints);
-        fill(255, 0, 0, 100);
+        fill(255, 0, 200, 100);
         ellipse(centroid.x, centroid.y, 20, 20);
 
-        beginShape();
         for (PVector pt : blobPoints) {
-            vertex(pt.x, pt.y);
+            PVector unitVec = PVector.sub(pt, centroid);
+            unitVec.normalize();
+            blobUnitVectors.add(unitVec);
         }
-        endShape(CLOSE);
+
+
+        for (int i = 0; i < numSteps; i++) {
+
+            beginShape();
+            for (int pointIndex = 0; pointIndex < blobPoints.size(); pointIndex++) {
+                PVector unitVec = blobUnitVectors.get(pointIndex).copy();
+                PVector pt = blobPoints.get(pointIndex).copy();
+                unitVec.x *= (blobWaveStep * i);
+                unitVec.y *= (blobWaveStep * i);
+                pt.add(unitVec);
+                vertex(pt.x, pt.y);
+            }
+            endShape(CLOSE);
+        }
     }
     
     // how many blobs did we find?
@@ -149,7 +166,6 @@ boolean filterBlob(Contour blob) {
     }
 
     if (whRatio < minBlobWidthHeightRatio) {
-        println("whRatio too small", whRatio);
         return false;
     }
 
