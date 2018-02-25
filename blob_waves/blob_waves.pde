@@ -1,5 +1,6 @@
 
 import processing.video.*;
+import processing.sound.*;
 import gab.opencv.*;
 import java.awt.Rectangle;
 
@@ -24,9 +25,14 @@ Processing code examples.
 
 Capture webcam;              // webcam input
 OpenCV cv;                   // instance of the OpenCV library
-
+SoundFile oceanSound;        // ocean sound to play from each point
+                             // Would one day love this to bspatiale positional
+                        
 float minBlobArea, maxBlobArea;
 float minBlobWidthHeightRatio;
+
+ArrayList<Contour> blobs;    // list of blob contours
+ArrayList<Contour> convexBlobs;    // list of blob contours
 
 float blobWaveStep = 20;
 float numSteps = 4;
@@ -38,23 +44,26 @@ void setup() {
     // we'll pass each frame of video to it later
     // for processing
     cv = new OpenCV(this, width, height);
-    
+    println("Loading file.");
+    oceanSound = new SoundFile(this, "ocean.mp3");
+
     minBlobArea = (width * height) / 1000;
     maxBlobArea = (width * height) / 8;
     minBlobWidthHeightRatio = 0.3; // 0-1, square + circle have 1
-
+https://github.com/processing/processing/issues/4601
     println("MinArea", minBlobArea);
     println("MaxArea", maxBlobArea);
 
     // start the webcam
-    String[] inputs = Capture.list();
-    if (inputs.length == 0) {
+    String camId = getCameraIdBySpecsOrDefault(1280, 720, 30);
+    if (camId == null) {
         println("Couldn't detect any webcams connected!");
         exit();
     }
-    webcam = new Capture(this, inputs[0]);
+    webcam = new Capture(this, camId);
     webcam.start();
-    
+
+    oceanSound.loop();
     // text settings (for showing the # of blobs)
     textSize(20);
     textAlign(LEFT, BOTTOM);
@@ -62,9 +71,6 @@ void setup() {
 
 
 void draw() {
-    ArrayList<Contour> blobs;    // list of blob contours
-    ArrayList<Contour> convexBlobs;    // list of blob contours
-
   // don't do anything until a new frame of video
   // is available
   if (webcam.available()) {
