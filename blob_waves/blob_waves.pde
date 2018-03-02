@@ -41,9 +41,11 @@ float blobWaveStep = 20;
 float detail = 0.6;      // amount of detail in the noise (0-1)
 float increment = 0.002;    // how quickly to move through noise (0-1)
 
-int threshold;
+PImage bgImage = null; // The background to remove
+int threshold; // for thresholding the image
 
 boolean debug = true;
+boolean resetBackground = true;
 
 void setup() {
     size(1280,720);
@@ -87,7 +89,15 @@ void draw() {
     return;
   }
 
+
+
+  if (bgImage == null || resetBackground) {
+    log("Resetting background!");
+    bgImage = cv.getSnapshot();
+    resetBackground = false;
+  }
   prepareImage();
+
   image(cv.getOutput(), 0,0);
   // image(webcam, 0,0);
   blobDetect();
@@ -105,6 +115,9 @@ void draw() {
 void keyPressed() {
   if (key == 'd') {
     debug = !debug;
+  } else if (key == 'u') {
+    // Mark the background for updating
+    resetBackground = true;
   }
 }
 
@@ -137,6 +150,7 @@ boolean filterBlob(Blob blob) {
 void prepareImage() {
   // read the webcam and load the frame into OpenCV
   webcam.read();
+  // subtract out the background
   cv.loadImage(webcam);
 
   // pre-process the image (adjust the threshold
@@ -146,6 +160,9 @@ void prepareImage() {
   // cv.invert();    // blobs should be white, so you might have to use this
   cv.dilate();
   cv.erode();
+
+  cv.diff(bgImage);
+  webcam.mask(cv.getOutput());
 }
 
 /**
@@ -198,6 +215,7 @@ void blobDetect() {
       }
   }
 
+  // Remove those that contain other blobs
   for (int i = foundBlobs.size() - 1; i >= 0; i--) {
     Blob blob = foundBlobs.get(i);
     if (blob.containsAnother(foundBlobs)) {
@@ -206,13 +224,7 @@ void blobDetect() {
   }
 
   // Persistance!
-  if (blobs.isEmpty() && foundBlobs.size() > 0) {
-    // All foundBlobs are new!
-    log("New blobs!");
-    for (Blob b: foundBlobs) {
-      addNewBlob(b);
-    }
-  } else if (blobs.size() <= foundBlobs.size()) {
+  if (blobs.size() <= foundBlobs.size()) {
     // log("Matching blobs");
     // Same blobs detected, let's match!
     // match by closest distance
