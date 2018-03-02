@@ -37,7 +37,6 @@ List<Blob> blobs = new ArrayList();    // list of blobs we know about
 AtomicInteger blobId = new AtomicInteger(0); // how we give blobs ids
 
 float blobWaveStep = 20;
-float numSteps = 4;
 
 float detail = 0.6;      // amount of detail in the noise (0-1)
 float increment = 0.002;    // how quickly to move through noise (0-1)
@@ -53,7 +52,7 @@ void setup() {
     // we'll pass each frame of video to it later
     // for processing
     cv = new OpenCV(this, width, height);
-    println("Loading file.");
+    log("Loading file.");
     // oceanSound = new SoundFile(this, "ocean.mp3");
 
     noiseDetail(8, detail);
@@ -63,13 +62,13 @@ void setup() {
     minBlobWidthHeightRatio = 0.3; // 0-1, square + circle have 1
 
     // https://github.com/processing/processing/issues/4601
-    println("MinArea", minBlobArea);
-    println("MaxArea", maxBlobArea);
+    log("MinArea", minBlobArea);
+    log("MaxArea", maxBlobArea);
 
     // start the webcam
     String camId = getCameraIdBySpecsOrDefault(1280, 720, 30);
     if (camId == null) {
-        println("Couldn't detect any webcams connected!");
+        log("Couldn't detect any webcams connected!");
         exit();
     }
     webcam = new Capture(this, camId);
@@ -81,142 +80,31 @@ void setup() {
     textAlign(LEFT, BOTTOM);
 }
 
-void prepareImage() {
-  // read the webcam and load the frame into OpenCV
-  webcam.read();
-  cv.loadImage(webcam);
-
-  // pre-process the image (adjust the threshold
-  // using the mouse) and display it onscreen
-  int threshold = int(map(mouseY, 0,height, 0, 255));
-  cv.threshold(threshold);
-  // cv.invert();    // blobs should be white, so you might have to use this
-  cv.dilate();
-  cv.erode();
-}
-
-
 void draw() {
   // don't do anything until a new frame of video
   // is available
-  if (webcam.available()) {
-    prepareImage();
+  if (!webcam.available()) {
+    return;
+  }
 
-    image(cv.getOutput(), 0,0);
+  prepareImage();
+  image(cv.getOutput(), 0,0);
+  // image(webcam, 0,0);
+  blobDetect();
 
-    // get the blobs and draw them
-    List<Contour> contours = cv.findContours();
-    List<Blob> foundBlobs = new ArrayList(); // list of filtered blobs we've found
+  // Draw the blobs
+  noFill();
+  stroke(255,150,100);
+  strokeWeight(3);
 
-    // Do basic filtering and transform Contour => Blob
-    for (Contour contour: contours) {
-        Blob convexBlob = blobFromContour(contour.getConvexHull());
-        if (filterBlob(convexBlob)) {
-            foundBlobs.add(convexBlob);
-        }
-    }
+  for (Blob blob : blobs) {
+      blob.display();
+  }
+}
 
-    // Persistance!
-    if (blobs.isEmpty() && foundBlobs.size() > 0) {
-      // All foundBlobs are new!
-      println("New blobs!");
-      for (Blob b: foundBlobs) {
-        b.setId(blobId.getAndIncrement());
-        blobs.add(b);
-        println("Found new blob:", b.id);
-      }
-    } else if (blobs.size() <= foundBlobs.size()) {
-      // println("Matching blobs");
-      // Same blobs detected, let's match!
-      // match by closest distance
-      for (Blob blob: blobs) {
-        // find min distance index
-        // set the id
-        Blob matchedBlob = null;
-        float minDistance = width * height; // will never be greater than this
-        for (Blob foundBlob: foundBlobs) {
-          float dist = PVector.dist(blob.getCentroid(), foundBlob.getCentroid());
-          if (dist < minDistance && !foundBlob.matched) {
-            matchedBlob = foundBlob;
-            minDistance = dist;
-          }
-        }
-        // println("Blob matched:", matchedBlob);
-        matchedBlob.matched = true;
-        blob.become(matchedBlob);
-        println("Matched blob:", blob.id);
-      }
-
-      // Now add all unmatched blobs
-      for (Blob b: foundBlobs) {
-        if (!b.matched) {
-          b.setId(blobId.getAndIncrement());
-          blobs.add(b);
-          println("Found new blob:", b.id);
-        }
-      }
-    } else if (blobs.size() > foundBlobs.size()) {
-      // Need to remove all that aren't there anymore
-      // quickly initialize all current blobs as not matched
-      for (Blob b: blobs) {
-        b.matched = false;
-      }
-
-      // Reverse the loop
-      for (Blob foundBlob: foundBlobs) {
-        // find min distance index
-        // set the id
-        Blob matchedBlob = null;
-        float minDistance = width * height; // will never be greater than this
-        for (Blob blob: blobs) {
-          float dist = PVector.dist(blob.getCentroid(), foundBlob.getCentroid());
-          if (dist < minDistance && !foundBlob.matched) {
-            matchedBlob = foundBlob;
-            minDistance = dist;
-          }
-        }
-        // if it
-        if (matchedBlob != null) {
-          // Matched in this case is a blob we already know about
-          matchedBlob.matched = true;
-          matchedBlob.become(foundBlob);
-        }
-      }
-
-      // Now add all unmatched blobs
-      for (int i = blobs.size() - 1; i >= 0; i--) {
-        Blob blob = blobs.get(i);
-        if (!blob.matched) {
-          blobs.remove(i);
-          println("Goodbye blob:", blob.id);
-        }
-      }
-    }
-
-
-
-    // Draw the blobs
-
-    noFill();
-    stroke(255,150,100);
-    strokeWeight(3);
-
-    for (Blob blob : blobs) {
-        // println("Blob:", blob.id);
-        // Last minute filtering tyring to rid the world of blobs in blobs
-
-        // println(blob.pointMat.size().height, blob.getBoundingBox().height);
-        blob.display();
-    }
-
-    // how many blobs did we find?
-    if (debug) {
-      fill(0,150,255);
-      noStroke();
-      text(threshold + " threshold", 20, height - 60);
-      text(contours.size() + " blobs before filter", 20, height - 40);
-      text(foundBlobs.size() + " blobs", 20, height - 20);
-    }
+void keyPressed() {
+  if (key == 'd') {
+    debug = !debug;
   }
 }
 
@@ -245,8 +133,145 @@ boolean filterBlob(Blob blob) {
     return true;
 }
 
-void keyPressed() {
-  if (key == 'd') {
-    debug = !debug;
+
+void prepareImage() {
+  // read the webcam and load the frame into OpenCV
+  webcam.read();
+  cv.loadImage(webcam);
+
+  // pre-process the image (adjust the threshold
+  // using the mouse) and display it onscreen
+  threshold = int(map(mouseY, 0, height, 0, 255));
+  cv.threshold(threshold);
+  // cv.invert();    // blobs should be white, so you might have to use this
+  cv.dilate();
+  cv.erode();
+}
+
+/**
+* Updates a blob from another and resets the resets the timer
+* NOTE: Could be a class method
+*/
+void setBlob(Blob dest, Blob from) {
+  dest.become(from);
+  dest.resetTimer();
+}
+
+void addNewBlob(Blob b) {
+  b.setId(blobId.getAndIncrement());
+  blobs.add(b);
+  // log("Found new blob:", b.id);
+}
+
+/**
+* Find the next closest blob that hasn't already been matched
+*/
+Blob closestNotAlreadyMatched(Blob blob, List<Blob> foundBlobs) {
+  Blob matchedBlob = null;
+  float minDistance = width * height; // will never be greater than this
+  for (Blob foundBlob: foundBlobs) {
+    float dist = PVector.dist(blob.getCentroid(), foundBlob.getCentroid());
+    float sizeDiff = abs(blob.getContour().area() - foundBlob.getContour().area());
+    float compareDist = (1 * dist) + (0 * sizeDiff); // could weight these
+    if (compareDist < minDistance && !foundBlob.matched) {
+      matchedBlob = foundBlob;
+      minDistance = compareDist;
+    }
+  }
+
+  return matchedBlob;
+}
+
+/**
+* Detect blobs with persistance
+*/
+void blobDetect() {
+  // get the blobs and draw them
+  List<Contour> contours = cv.findContours();
+  List<Blob> foundBlobs = new ArrayList(); // list of filtered blobs we've found
+
+  // Do basic filtering and transform Contour => Blob
+  for (Contour contour: contours) {
+      Blob convexBlob = blobFromContour(contour.getConvexHull());
+      if (filterBlob(convexBlob)) {
+          foundBlobs.add(convexBlob);
+      }
+  }
+
+  for (int i = foundBlobs.size() - 1; i >= 0; i--) {
+    Blob blob = foundBlobs.get(i);
+    if (blob.containsAnother(foundBlobs)) {
+        foundBlobs.remove(i);
+    }
+  }
+
+  // Persistance!
+  if (blobs.isEmpty() && foundBlobs.size() > 0) {
+    // All foundBlobs are new!
+    log("New blobs!");
+    for (Blob b: foundBlobs) {
+      addNewBlob(b);
+    }
+  } else if (blobs.size() <= foundBlobs.size()) {
+    // log("Matching blobs");
+    // Same blobs detected, let's match!
+    // match by closest distance
+    for (Blob blob: blobs) {
+      // find min distance index
+      // set the id
+      Blob matchedBlob = closestNotAlreadyMatched(blob, foundBlobs);
+      matchedBlob.matched = true;
+      setBlob(blob, matchedBlob);
+      // log("Matched blob:", blob.id);
+    }
+
+    // Now add all unmatched blobs
+    for (Blob b: foundBlobs) {
+      if (!b.matched) {
+        addNewBlob(b);
+      }
+    }
+  } else if (blobs.size() > foundBlobs.size()) {
+    // Need to remove all that aren't there anymore
+    // quickly initialize all current blobs as not matched
+    for (Blob b: blobs) {
+      b.matched = false;
+    }
+
+    // Reverse the loop
+    for (Blob foundBlob: foundBlobs) {
+      // Reverse everything!
+      Blob matchedBlob = closestNotAlreadyMatched(foundBlob, blobs);
+
+      // if it has found a match
+      if (matchedBlob != null) {
+        // Matched in this case is a blob we already know about
+        matchedBlob.matched = true;
+        matchedBlob.become(foundBlob);
+        matchedBlob.resetTimer();
+      }
+    }
+
+    // Now remove all unmatched
+    for (int i = blobs.size() - 1; i >= 0; i--) {
+      Blob blob = blobs.get(i);
+      if (!blob.matched) {
+        blob.decrementTimer();
+        if (blob.timedout()) {
+          blobs.remove(i);
+          // log("Goodbye blob:", blob.id);
+        }
+      }
+    }
+  }
+
+  // how many blobs did we find?
+  if (debug) {
+    fill(0,150,255);
+    fill(0);
+    noStroke();
+    text(threshold + " threshold", 20, height - 60);
+    text(contours.size() + " blobs before filter", 20, height - 40);
+    text(foundBlobs.size() + " blobs", 20, height - 20);
   }
 }

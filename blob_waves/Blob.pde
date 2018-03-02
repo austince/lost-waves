@@ -5,15 +5,18 @@ class Blob {
   Contour contour;
   int id = -1;
   int numSteps = 3;
-  Date lastSeen;
+  int waveStep = 50;
+  int currentTimer;
+  int frameTimer = 25; // how many frames this can be gone for and not be removed
   PVector center = null;
   boolean matched = false;
+  PVector velocity = new PVector(0, 0);
 
   Blob(Contour contour) {
     this.contour = contour;
     // quadtruple the approximation
     contour.setPolygonApproximationFactor(contour.getPolygonApproximationFactor() * 4);
-    lastSeen = new Date();
+    resetTimer();
   }
 
   void setId(int id) {
@@ -22,6 +25,7 @@ class Blob {
 
   void become(Blob otherBlob) {
     contour = otherBlob.contour;
+    center = null;
   }
 
   Contour getContour() {
@@ -35,11 +39,23 @@ class Blob {
     return center;
   }
 
+  void decrementTimer() {
+    currentTimer--;
+  }
+
+  void resetTimer() {
+    currentTimer = frameTimer;
+  }
+
+  boolean timedout() {
+    return currentTimer < 0;
+  }
+
   void display() {
     ArrayList<PVector> blobPoints = getContour().getPolygonApproximation().getPoints();
     ArrayList<PVector> blobUnitVectors = new ArrayList<PVector>(blobPoints.size());
+    PVector centroid = getCentroid();
 
-    PVector centroid = getCentroidFromPoints(blobPoints);
     fill(255, 0, 200, 100);
     ellipse(centroid.x, centroid.y, 20, 20);
 
@@ -55,14 +71,18 @@ class Blob {
         for (int pointIndex = 0; pointIndex < blobPoints.size(); pointIndex++) {
             PVector unitVec = blobUnitVectors.get(pointIndex).copy();
             PVector pt = blobPoints.get(pointIndex).copy();
-            unitVec.x *= ((blobWaveStep * i) + noise(30));
-            unitVec.y *= ((blobWaveStep * i) + noise(30));
+            unitVec.x *= ((waveStep * i) + noise(30));
+            unitVec.y *= ((waveStep * i) + noise(30));
             pt.add(unitVec);
             vertex(pt.x, pt.y);
         }
         endShape(CLOSE);
-        fill(0);
-        text(id + "", centroid.x, centroid.y);
+
+        if (debug) {
+          fill(0);
+          text(id + "", centroid.x, centroid.y);
+          text(currentTimer + "", centroid.x, centroid.y - 40);
+        }
     }
   }
 
@@ -82,6 +102,8 @@ class Blob {
       return false;
   }
 }
+
+// "Static" Helper methods
 
 List<Blob> blobsFromContourList(List<Contour> list) {
   ArrayList<Blob> blobs = new ArrayList(list.size());
