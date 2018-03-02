@@ -32,6 +32,7 @@ SoundFile oceanSound;        // ocean sound to play from each point
 
 float minBlobArea, maxBlobArea;
 float minBlobWidthHeightRatio;
+float maxBlobDistanceChange; // todo, an extension on blob tracking
 
 List<Blob> blobs = new ArrayList();    // list of blobs we know about
 AtomicInteger blobId = new AtomicInteger(0); // how we give blobs ids
@@ -42,8 +43,7 @@ float detail = 0.6;      // amount of detail in the noise (0-1)
 float increment = 0.002;    // how quickly to move through noise (0-1)
 
 PImage bgImage = null; // The background to remove
-boolean hasDiffed = false;
-int threshold; // for thresholding the image
+int threshold = 60; // for thresholding the image
 
 boolean debug = true;
 boolean resetBackground = true;
@@ -60,9 +60,11 @@ void setup() {
 
     noiseDetail(8, detail);
 
-    minBlobArea = (width * height) / 1000;
-    maxBlobArea = (width * height) / 8;
+    minBlobArea = (width * height) / 512;
+    maxBlobArea = (width * height) / 128;
     minBlobWidthHeightRatio = 0.3; // 0-1, square + circle have 1
+
+    maxBlobDistanceChange = (width * height) / 100; // only let the blob change by 1/100 of the area
 
     // https://github.com/processing/processing/issues/4601
     log("MinArea", minBlobArea);
@@ -84,6 +86,7 @@ void setup() {
 }
 
 void draw() {
+  background(150);
   // don't do anything until a new frame of video
   // is available
   if (!webcam.available()) {
@@ -92,7 +95,7 @@ void draw() {
 
   prepareImage();
 
-  image(cv.getOutput(), 0,0);
+  // image(cv.getOutput(), 0,0);
   // image(webcam, 0,0);
   blobDetect();
 
@@ -102,7 +105,8 @@ void draw() {
   strokeWeight(3);
 
   for (Blob blob : blobs) {
-      blob.display();
+    blob.update();
+    blob.display();
   }
 }
 
@@ -112,6 +116,12 @@ void keyPressed() {
   } else if (key == 'u') {
     // Mark the background for updating
     resetBackground = true;
+  } else if (key == CODED) {
+    if (keyCode == UP) {
+      threshold += 5;
+    } else if (keyCode == DOWN) {
+      threshold -= 5;
+    }
   }
 }
 
@@ -153,12 +163,11 @@ void prepareImage() {
     resetBackground = false;
   }
 
-  // Remove that background!
+  // Remove that background before it's all eroded and such!
   cv.diff(bgImage);
 
   // pre-process the image (adjust the threshold
   // using the mouse) and display it onscreen
-  threshold = int(map(mouseY, 0, height, 0, 255));
   cv.threshold(threshold);
   cv.invert();    // blobs should be white, so you might have to use this
   cv.dilate();
