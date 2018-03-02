@@ -42,6 +42,7 @@ float detail = 0.6;      // amount of detail in the noise (0-1)
 float increment = 0.002;    // how quickly to move through noise (0-1)
 
 PImage bgImage = null; // The background to remove
+boolean hasDiffed = false;
 int threshold; // for thresholding the image
 
 boolean debug = true;
@@ -89,13 +90,6 @@ void draw() {
     return;
   }
 
-
-
-  if (bgImage == null || resetBackground) {
-    log("Resetting background!");
-    bgImage = cv.getSnapshot();
-    resetBackground = false;
-  }
   prepareImage();
 
   image(cv.getOutput(), 0,0);
@@ -150,19 +144,25 @@ boolean filterBlob(Blob blob) {
 void prepareImage() {
   // read the webcam and load the frame into OpenCV
   webcam.read();
-  // subtract out the background
+
   cv.loadImage(webcam);
+
+  if (bgImage == null || resetBackground) {
+    log("Resetting background!");
+    bgImage = cv.getSnapshot();
+    resetBackground = false;
+  }
+
+  // Remove that background!
+  cv.diff(bgImage);
 
   // pre-process the image (adjust the threshold
   // using the mouse) and display it onscreen
   threshold = int(map(mouseY, 0, height, 0, 255));
   cv.threshold(threshold);
-  // cv.invert();    // blobs should be white, so you might have to use this
+  cv.invert();    // blobs should be white, so you might have to use this
   cv.dilate();
   cv.erode();
-
-  cv.diff(bgImage);
-  webcam.mask(cv.getOutput());
 }
 
 /**
