@@ -9,6 +9,25 @@ DateFormat logStamp = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss -- ");
 
 PrintWriter output;
 
+void logDisplayInfo() {
+  // let's get some info about the current display
+
+  // get the display's dimensions
+  // Processing normally won't let us use variables in the size()
+  // command, but we can pass it the dimensions of the display
+  log("DISPLAY:", "-", displayWidth, "x", displayHeight, "px");
+
+  // get the display's pixel density
+  // this will optimize the sketch's graphics for retina and other
+  // high-density displays
+  if (displayDensity() == 1) {
+    log("DISPLAY:", "- normal-density display (1x)");
+  }
+  else {
+    log("DISPLAY:", "- retina display (2x)");
+  }
+}
+
 void setupLogger() {
   output = createWriter("log.txt");
 }

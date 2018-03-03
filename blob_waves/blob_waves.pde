@@ -49,9 +49,14 @@ void setup() {
 
     setupLogger();
 
+    logDisplayInfo();
+    pixelDensity(displayDensity());
+
+
     // create an instance of the OpenCV library
     cv = new OpenCV(this, width, height);
 
+    // Set the noise for the ring growth
     noiseDetail(8, detail);
 
     // For blob filtering
@@ -65,6 +70,7 @@ void setup() {
     // https://github.com/processing/processing/issues/4601
     log("Blob MinArea", minBlobArea);
     log("Blob MaxArea", maxBlobArea);
+
 
     // start the webcam
     logCameras();
