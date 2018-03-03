@@ -27,8 +27,6 @@ AtomicInteger blobId = new AtomicInteger(0); // how we give blobs ids
 List<Ring> rings = new ArrayList();
 AtomicInteger ringId = new AtomicInteger(0);
 
-float blobWaveStep = 20;
-
 float detail = 0.6;      // amount of detail in the noise (0-1)
 float increment = 0.002;    // how quickly to move through noise (0-1)
 
@@ -36,6 +34,7 @@ PImage bgImage = null; // The background to remove
 int threshold = 60; // for thresholding the image
 
 int blobSpawnAge = 200;
+int maxRingAge = 600;
 
 boolean debug = true;
 boolean production = false;
@@ -86,6 +85,8 @@ void setup() {
     textSize(20);
     textAlign(LEFT, BOTTOM);
 
+    colorMode(HSB, 360, 100, 100);
+
     noCursor();
 
     frameRate(30); // 60 is too much for the blob detection
@@ -104,14 +105,23 @@ void draw() {
       log("Spawning ring from blob", blob.id);
       Ring ring = blob.spawnRing();
       ring.setId(ringId.getAndIncrement());
+      ring.setMaxAge(maxRingAge);
+      ring.setGrowAge(50);
       rings.add(ring);
     }
     blob.display();
   }
 
-  for (Ring ring: rings) {
+  for (int i = rings.size() - 1; i >= 0; i--) {
+    Ring ring = rings.get(i);
     ring.update();
-    ring.display();
+
+    if (ring.age >= maxRingAge) {
+      log("Removing ring", ring.id);
+      rings.remove(i);
+    } else {
+      ring.display();
+    }
   }
 
   String fps = nf(frameRate, 0,2) + " fps";
