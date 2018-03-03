@@ -62,20 +62,18 @@ class Blob {
         unitVec.normalize();
         unitVectorsToCentroid.add(unitVec);
     }
-
-    if (rings.size() == 0) {
-      // no rings already
-      rings.add(new Ring(blobPoints));
-    } else {
-      // Must update all rings towards new point?
-      for (Ring ring: rings) {
-        ring.shift(centroidChange);
-      }
-    }
   }
 
   void update() {
     age++;
+  }
+
+  Ring spawnRing() {
+    return new Ring(
+      getContour().getPolygonApproximation().getPoints(),
+      unitVectorsToCentroid,
+      centroid
+    );
   }
 
   // Time lifespacn
@@ -91,37 +89,10 @@ class Blob {
     return currentTimer < 0;
   }
 
-  void display() {
-    for (int i = 0; i < rings.size(); i++) {
-      Ring ring = rings.get(i);
-      fill(255, 0, 200, 100);
-      beginShape();
-      for (int pointIndex = 0; pointIndex < ring.points.size(); pointIndex++) {
-          PVector unitVec = unitVectorsToCentroid.get(pointIndex);
-          PVector pt = ring.points.get(pointIndex).copy();
-          float scale = ((waveStep * i) + noise(30));
-          // float yscale = ((waveStep * i) + noise(30));
-          pt.add(PVector.mult(unitVec, scale));
-          vertex(pt.x, pt.y);
-      }
-      endShape(CLOSE);
-    }
-
-    if (debug) {
-      fill(255, 0, 200, 100);
-      ellipse(centroid.x, centroid.y, 20, 20);
-
-      textMode(CENTER);
-      textSize(20);
-      fill(0);
-      text(id + "", centroid.x, centroid.y);
-      textSize(16);
-      fill(255, 0, 0, 200);
-      text(currentTimer + " till dead.", centroid.x, centroid.y - 20);
-      text(age + " frames old.", centroid.x, centroid.y - 40);
-    }
-  }
-
+  /**
+  * If the blob contains another blob in a list of blobs
+  * @param blobs - the list of all blobs
+  */
   boolean containsAnother(List<Blob> blobs) {
       for (Blob otherBlob: blobs) {
           // don't check if it contains itself
@@ -137,21 +108,20 @@ class Blob {
 
       return false;
   }
-}
 
-class Ring {
-  ArrayList<PVector> points;
-  ArrayList<PVector> unitVectorsToCentroid;
-  PVector centroid;
+  void display() {
+    if (debug) {
+      fill(255, 0, 200, 100);
+      ellipse(centroid.x, centroid.y, 20, 20);
 
-
-  Ring(ArrayList<PVector> pts, PVector centroid) {
-    points = pts;
-  }
-
-  void shift(PVector amount) {
-    for (PVector pt: points) {
-      pt.add(amount);
+      textMode(CENTER);
+      textSize(20);
+      fill(0);
+      text(id + "", centroid.x, centroid.y);
+      textSize(16);
+      fill(255, 0, 0, 200);
+      text(currentTimer + " till dead.", centroid.x, centroid.y - 20);
+      text(age + " frames old.", centroid.x, centroid.y - 40);
     }
   }
 }

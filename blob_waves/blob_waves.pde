@@ -37,6 +37,8 @@ float maxBlobDistanceChange; // todo, an extension on blob tracking
 List<Blob> blobs = new ArrayList();    // list of blobs we know about
 AtomicInteger blobId = new AtomicInteger(0); // how we give blobs ids
 
+List<Ring> rings = new ArrayList();
+
 float blobWaveStep = 20;
 
 float detail = 0.6;      // amount of detail in the noise (0-1)
@@ -49,7 +51,9 @@ boolean debug = true;
 boolean resetBackground = true;
 
 void setup() {
-    size(1280,720);
+    size(1280,720); // for local
+    // size(displayWidth, displayHeight); // for production
+
     colorMode(HSB);
     // create an instance of the OpenCV library
     // we'll pass each frame of video to it later
@@ -83,6 +87,8 @@ void setup() {
     // text settings (for showing the # of blobs)
     textSize(20);
     textAlign(LEFT, BOTTOM);
+
+    noCursor();
 }
 
 void draw() {
@@ -95,6 +101,7 @@ void draw() {
 
   prepareImage();
 
+  // To show the captured image
   // image(cv.getOutput(), 0,0);
   // image(webcam, 0,0);
   blobDetect();
@@ -106,7 +113,14 @@ void draw() {
 
   for (Blob blob : blobs) {
     blob.update();
+    // if (blob.age % 600 == 0) {
+    //   rings.add(blob.spawnRing());
+    // }
     blob.display();
+  }
+
+  for (Ring ring: rings) {
+    // ring.display();
   }
 }
 
