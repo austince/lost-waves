@@ -93,7 +93,7 @@ void setup() {
 }
 
 void draw() {
-  background(150);
+  background(0, 0, 100); // white
   // Draw the blobs and the rings
   noFill();
   stroke(255,150,100);
