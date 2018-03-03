@@ -10,25 +10,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 BLOB DETECTION: WEBCAM
 Austin Cawley-Edwards, Jeff Thompson
 
-An expanded version of the Blob Detection example
-using the webcam as an input. Try using your phone's
-flashlight in a darkened room, adjusting the threshold
-until it's the only blob. The mouse's X position is
-also used to set the minimum blob size – anything smaller
-is ignored, which is useful for noisey environments.
-
-Details on how the pre-processing and blob detection
-work are skipped here, so see the previous example
-if you want to understand what's happening there.
-For more on getting webcam input, see the Image
-Processing code examples.
-
 */
 
 Capture webcam;              // webcam input
 OpenCV cv;                   // instance of the OpenCV library
 SoundFile oceanSound;        // ocean sound to play from each point
-                             // Would one day love this to bspatiale positional
+                             // Would one day love this to be spatial / positional
 
 float minBlobArea, maxBlobArea;
 float minBlobWidthHeightRatio;
@@ -38,6 +25,7 @@ List<Blob> blobs = new ArrayList();    // list of blobs we know about
 AtomicInteger blobId = new AtomicInteger(0); // how we give blobs ids
 
 List<Ring> rings = new ArrayList();
+AtomicInteger ringId = new AtomicInteger(0);
 
 float blobWaveStep = 20;
 
@@ -47,34 +35,40 @@ float increment = 0.002;    // how quickly to move through noise (0-1)
 PImage bgImage = null; // The background to remove
 int threshold = 60; // for thresholding the image
 
+int blobSpawnAge = 200;
+
 boolean debug = true;
-boolean resetBackground = true;
+boolean production = false;
+
+boolean resetBackground = true; // always reset on first run
 
 void setup() {
-    size(1280,720); // for local
+    size(1280, 720); // for local
     // size(displayWidth, displayHeight); // for production
 
     colorMode(HSB);
+
+    setupLogger();
+
     // create an instance of the OpenCV library
-    // we'll pass each frame of video to it later
-    // for processing
     cv = new OpenCV(this, width, height);
-    log("Loading file.");
-    // oceanSound = new SoundFile(this, "ocean.mp3");
 
     noiseDetail(8, detail);
 
+    // For blob filtering
     minBlobArea = (width * height) / 512;
-    maxBlobArea = (width * height) / 128;
-    minBlobWidthHeightRatio = 0.3; // 0-1, square + circle have 1
+    maxBlobArea = (width * height) / 256;
+    minBlobWidthHeightRatio = 0.4; // 0-1, square + circle have 1
 
+    // not yet implemented
     maxBlobDistanceChange = (width * height) / 100; // only let the blob change by 1/100 of the area
 
     // https://github.com/processing/processing/issues/4601
-    log("MinArea", minBlobArea);
-    log("MaxArea", maxBlobArea);
+    log("Blob MinArea", minBlobArea);
+    log("Blob MaxArea", maxBlobArea);
 
     // start the webcam
+    logCameras();
     String camId = getCameraIdBySpecsOrDefault(1280, 720, 30);
     if (camId == null) {
         log("Couldn't detect any webcams connected!");
@@ -83,44 +77,62 @@ void setup() {
     webcam = new Capture(this, camId);
     webcam.start();
 
-    // oceanSound.loop();
+
+    if (!debug) {
+      oceanSound = new SoundFile(this, "ocean.mp3");
+      oceanSound.loop();
+    }
     // text settings (for showing the # of blobs)
     textSize(20);
     textAlign(LEFT, BOTTOM);
 
     noCursor();
+
+    frameRate(30); // 60 is too much for the blob detection
 }
 
 void draw() {
   background(150);
-  // don't do anything until a new frame of video
-  // is available
-  if (!webcam.available()) {
-    return;
-  }
-
-  prepareImage();
-
-  // To show the captured image
-  // image(cv.getOutput(), 0,0);
-  // image(webcam, 0,0);
-  blobDetect();
-
-  // Draw the blobs
+  // Draw the blobs and the rings
   noFill();
   stroke(255,150,100);
   strokeWeight(3);
 
   for (Blob blob : blobs) {
     blob.update();
-    // if (blob.age % 600 == 0) {
-    //   rings.add(blob.spawnRing());
-    // }
+    if (blob.age % blobSpawnAge == 0) {
+      log("Spawning ring from blob", blob.id);
+      Ring ring = blob.spawnRing();
+      ring.setId(ringId.getAndIncrement());
+      rings.add(ring);
+    }
     blob.display();
   }
 
   for (Ring ring: rings) {
-    // ring.display();
+    ring.update();
+    ring.display();
+  }
+
+  String fps = nf(frameRate, 0,2) + " fps";
+  if (debug) {
+    fill(0);
+    noStroke();
+    text(fps, 50,50);
+  }
+  logInProd(fps);
+
+
+  // don't do any blob detection until a new frame of video is available
+  // is available
+  if (webcam.available()) {
+    prepareImage();
+
+    // To show the captured image
+    // image(cv.getOutput(), 0,0);
+    // image(webcam, 0,0);
+    // Could improve the performance by better filtering?
+    blobDetect(); // should do this in a background thread :/
   }
 }
 
@@ -294,7 +306,7 @@ void blobDetect() {
         blob.decrementTimer();
         if (blob.timedout()) {
           blobs.remove(i);
-          // log("Goodbye blob:", blob.id);
+          log("Goodbye blob:", blob.id);
         }
       }
     }
@@ -308,5 +320,7 @@ void blobDetect() {
     text(threshold + " threshold", 20, height - 60);
     text(contours.size() + " blobs before filter", 20, height - 40);
     text(foundBlobs.size() + " blobs", 20, height - 20);
+    // log(contours.size() + " blobs before filter");
+    // log(foundBlobs.size() + " blobs");
   }
 }

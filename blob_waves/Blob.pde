@@ -41,7 +41,7 @@ class Blob {
   void updateContour(Contour newContour) {
     contour = newContour;
     // quadtruple the approximation
-    contour.setPolygonApproximationFactor(contour.getPolygonApproximationFactor() * 4);
+    // contour.setPolygonApproximationFactor(contour.getPolygonApproximationFactor() * 4);
 
     // update the unit vectors and centroid
     ArrayList<PVector> blobPoints = getContour().getPolygonApproximation().getPoints();
