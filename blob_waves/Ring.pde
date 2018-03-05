@@ -3,6 +3,7 @@ class Ring {
   ArrayList<PVector> points;
   ArrayList<PVector> unitVectorsToCentroid;
   PVector centroid;
+  PShape pointShape;
   float growthScale = 2;
   float growthScaleY = 2;
   int id = -1;
@@ -17,6 +18,7 @@ class Ring {
     this.points = pts;
     this.unitVectorsToCentroid = unitVecs;
     this.centroid = centroid;
+    makeShape();
   }
 
   void setId(int id) {
@@ -57,6 +59,16 @@ class Ring {
     }
   }
 
+  private void makeShape() {
+    pointShape = createShape();
+    pointShape.beginShape();
+    for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
+        PVector pt = points.get(pointIndex);
+        pointShape.vertex(pt.x, pt.y);
+    }
+    pointShape.endShape(CLOSE);
+  }
+
   void display() {
     colorMode(HSB, 360, 100, 100);
     float maxShift = width * height / 92160; // 10px on 1280 x 720
@@ -64,16 +76,17 @@ class Ring {
     color c = color(360, 0, 70, alpha);
     fill(c);
     noStroke();
-    beginShape();
-    for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
-        PVector pt = points.get(pointIndex);
-        // float xNoise = map(noise(xNoiseOff, yNoiseOff), 0, 1, 0, maxShift);
-        // float yNoise = map(noise(yNoiseOff, xNoiseOff), 0, 1, 0, maxShift);
-        // vertex(pt.x + xNoise, pt.y + yNoise);
-        vertex(pt.x, pt.y);
-        xNoiseOff = (xNoiseOff + 0.05);
-        yNoiseOff = (yNoiseOff + 0.01);
-    }
-    endShape(CLOSE);
+    shape(pointShape);
+    // beginShape();
+    // for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
+    //     PVector pt = points.get(pointIndex);
+    //     // float xNoise = map(noise(xNoiseOff, yNoiseOff), 0, 1, 0, maxShift);
+    //     // float yNoise = map(noise(yNoiseOff, xNoiseOff), 0, 1, 0, maxShift);
+    //     // vertex(pt.x + xNoise, pt.y + yNoise);
+    //     vertex(pt.x, pt.y);
+    //     xNoiseOff = (xNoiseOff + 0.05);
+    //     yNoiseOff = (yNoiseOff + 0.01);
+    // }
+    // endShape(CLOSE);
   }
 }
