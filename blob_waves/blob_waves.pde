@@ -33,8 +33,8 @@ float increment = 0.002;    // how quickly to move through noise (0-1)
 PImage bgImage = null; // The background to remove
 int threshold = 60; // for thresholding the image
 
-int blobSpawnAge = 200;
-int maxRingAge = 600;
+int blobSpawnAge = 600;
+int maxRingAge = 6000;
 
 boolean debug = true;
 boolean production = false;
@@ -42,8 +42,8 @@ boolean production = false;
 boolean resetBackground = true; // always reset on first run
 
 void setup() {
-    size(1280, 720); // for local
-    // size(displayWidth, displayHeight); // for production
+    size(1280, 720, P3D); // for local
+    // size(displayWidth, displayHeight, P3D); // for production
 
     colorMode(HSB);
 
@@ -100,11 +100,8 @@ void setup() {
 
 void draw() {
   background(0, 0, 100); // white
+  lights();
   // Draw the blobs and the rings
-  noFill();
-  stroke(255,150,100);
-  strokeWeight(3);
-
   for (Blob blob : blobs) {
     blob.update();
     if (blob.age % blobSpawnAge == 0) {

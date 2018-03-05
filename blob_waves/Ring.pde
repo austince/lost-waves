@@ -1,3 +1,4 @@
+// TODO: Make the contour into a shape for quicker drawing / scaling
 class Ring {
   ArrayList<PVector> points;
   ArrayList<PVector> unitVectorsToCentroid;
@@ -30,6 +31,10 @@ class Ring {
     growAge = age;
   }
 
+  void setGrowthScale(float scale) {
+    growthScale = scale;
+  }
+
   void shift(PVector amount) {
     for (PVector pt: points) {
       pt.add(amount);
@@ -37,14 +42,10 @@ class Ring {
   }
 
   void grow() {
-    // growthScale += noise(30);
-    // growthScaleY += noise(30);
-
     for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
         PVector unitVec = unitVectorsToCentroid.get(pointIndex).copy();
         PVector pt = points.get(pointIndex); // don't copy cause we're mod-ing!
         unitVec.mult(growthScale);
-        // unitVec.y *= growthScaleY;
         pt.add(unitVec);
     }
   }
@@ -62,13 +63,14 @@ class Ring {
     float alpha = map(age, 0, maxAge, 100, 0);
     color c = color(360, 0, 70, alpha);
     fill(c);
-    stroke(c);
+    noStroke();
     beginShape();
     for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
         PVector pt = points.get(pointIndex);
-        float xNoise = map(noise(xNoiseOff, yNoiseOff), 0, 1, 0, maxShift);
-        float yNoise = map(noise(yNoiseOff, xNoiseOff), 0, 1, 0, maxShift);
-        vertex(pt.x + xNoise, pt.y + yNoise);
+        // float xNoise = map(noise(xNoiseOff, yNoiseOff), 0, 1, 0, maxShift);
+        // float yNoise = map(noise(yNoiseOff, xNoiseOff), 0, 1, 0, maxShift);
+        // vertex(pt.x + xNoise, pt.y + yNoise);
+        vertex(pt.x, pt.y);
         xNoiseOff = (xNoiseOff + 0.05);
         yNoiseOff = (yNoiseOff + 0.01);
     }
