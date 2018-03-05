@@ -33,12 +33,15 @@ float increment = 0.002;    // how quickly to move through noise (0-1)
 PImage bgImage = null; // The background to remove
 int threshold = 60; // for thresholding the image
 
+int sampleRate = 5; // how often to run blob detection
+
 int blobSpawnAge = 600;
 int maxRingAge = 6000;
 
 boolean debug = true;
 boolean production = false;
-
+boolean drawWebcam = false;
+boolean drawCVOutput = false;
 boolean resetBackground = true; // always reset on first run
 
 void setup() {
@@ -62,7 +65,9 @@ void setup() {
     // For blob filtering
     minBlobArea = (width * height) / 512;
     maxBlobArea = (width * height) / 256;
-    minBlobWidthHeightRatio = 0.4; // 0-1, square + circle have 1
+    // 0-1, square + circle have 1
+    // diagonal lines also have this property, unfortunately... 
+    minBlobWidthHeightRatio = 0.4;
 
     // not yet implemented
     maxBlobDistanceChange = (width * height) / 100; // only let the blob change by 1/100 of the area
@@ -74,19 +79,17 @@ void setup() {
 
     // start the webcam
     logCameras();
-    String camId = getCameraIdBySpecsOrDefault(1280, 720, 30);
+    // String camId = getCameraIdBySpecs("video1", 1280, 720, 30);
+    String camId = getCameraIdBySpecs("video1", 640, 480, 30);
     if (camId == null) {
-        log("Couldn't detect any webcams connected!");
-        exit();
+      log("Couldn't get camera with spec.");
+      camId = getFirstCameraId();
+      log("Couldn't detect any webcams connected!");
+      exit();
     }
     webcam = new Capture(this, camId);
     webcam.start();
 
-
-    if (!debug) {
-      oceanSound = new SoundFile(this, "ocean.mp3");
-      oceanSound.loop();
-    }
     // text settings (for showing the # of blobs)
     textSize(20);
     textAlign(LEFT, BOTTOM);
@@ -95,7 +98,8 @@ void setup() {
 
     noCursor();
 
-    frameRate(30); // 60 is too much for the blob detection
+    frameRate(60);
+    // frameRate(30); // 60 is too much for the blob detection
 }
 
 void draw() {
@@ -138,7 +142,7 @@ void draw() {
 
   // don't do any blob detection until a new frame of video is available
   // is available
-  if (webcam.available()) {
+  if (webcam.available() && (frameCount % sampleRate == 0)) {
     prepareImage();
 
     // To show the captured image
@@ -146,6 +150,25 @@ void draw() {
     // image(webcam, 0,0);
     // Could improve the performance by better filtering?
     blobDetect(); // should do this in a background thread :/
+
+    if (drawWebcam) {
+      webcam.read();
+      image(webcam, 0, 0);
+    }
+  }
+
+  if (drawCVOutput) {
+    image(cv.getOutput(), 0, 0);
+  }
+
+  // how many blobs did we find?
+  if (debug) {
+    fill(0);
+    noStroke();
+    text(threshold + " threshold", 20, height - 40);
+    text(blobs.size() + " blobs", 20, height - 20);
+    // log(contours.size() + " blobs before filter");
+    // log(foundBlobs.size() + " blobs");
   }
 }
 
@@ -155,6 +178,10 @@ void keyPressed() {
   } else if (key == 'u') {
     // Mark the background for updating
     resetBackground = true;
+  } else if (key == 'w' ) {
+    drawWebcam = !drawWebcam;
+  } else if (key == 'c' ) {
+    drawCVOutput = !drawCVOutput;
   } else if (key == CODED) {
     if (keyCode == UP) {
       threshold += 5;
@@ -192,9 +219,12 @@ boolean filterBlob(Blob blob) {
 
 void prepareImage() {
   // read the webcam and load the frame into OpenCV
-  webcam.read();
+  webcam.read(); // take a photo
+  PImage photo = webcam.copy();
+  photo.resize(width, height); // stretch it to fill the display
 
-  cv.loadImage(webcam);
+  cv.loadImage(photo);
+
 
   if (bgImage == null || resetBackground) {
     log("Resetting background!");
@@ -323,17 +353,5 @@ void blobDetect() {
         }
       }
     }
-  }
-
-  // how many blobs did we find?
-  if (debug) {
-    fill(0,150,255);
-    fill(0);
-    noStroke();
-    text(threshold + " threshold", 20, height - 60);
-    text(contours.size() + " blobs before filter", 20, height - 40);
-    text(foundBlobs.size() + " blobs", 20, height - 20);
-    // log(contours.size() + " blobs before filter");
-    // log(foundBlobs.size() + " blobs");
   }
 }
