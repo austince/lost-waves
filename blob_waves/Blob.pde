@@ -13,9 +13,8 @@ class Blob {
   PVector centroid = null;
   boolean matched = false;
   PVector velocity = new PVector(0, 0);
+  color bColor;
   ArrayList<PVector> unitVectorsToCentroid = null;
-  // Each ring needs a set of points
-  ArrayList<Ring> rings = new ArrayList();
 
   Blob(Contour contour) {
     updateContour(contour);
@@ -32,6 +31,18 @@ class Blob {
 
   PVector getCentroid() {
     return centroid;
+  }
+
+  void setColor(color c) {
+    bColor = c;
+  }
+
+  void setFrameTimeout(int numFrames) {
+    frameTimer = numFrames;
+  }
+
+  color getColor() {
+    return bColor;
   }
 
   void become(Blob otherBlob) {
@@ -110,19 +121,17 @@ class Blob {
   }
 
   void display() {
-    if (debug) {
-      fill(255, 0, 200, 100);
-      ellipse(centroid.x, centroid.y, 20, 20);
+    fill(bColor);
+    ellipse(centroid.x, centroid.y, 20, 20);
 
-      textMode(CENTER);
-      textSize(20);
-      fill(0);
-      text(id + "", centroid.x, centroid.y);
-      textSize(16);
-      fill(255, 0, 0, 200);
-      text(currentTimer + " till dead.", centroid.x, centroid.y - 20);
-      text(age + " frames old.", centroid.x, centroid.y - 40);
-    }
+    textMode(CENTER);
+    textSize(20);
+    fill(0);
+    text(id + "", centroid.x, centroid.y);
+    textSize(16);
+    fill(255, 0, 0, 200);
+    text(currentTimer + " till dead.", centroid.x, centroid.y - 20);
+    text(age + " frames old.", centroid.x, centroid.y - 40);
   }
 }
 

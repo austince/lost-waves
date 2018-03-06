@@ -37,6 +37,9 @@ int sampleRate = 5; // how often to run blob detection
 
 int blobSpawnAge = 600;
 int maxRingAge = 6000;
+int blobFrameTimeout = 25;
+
+PVector sketchCenter;
 
 boolean debug = true;
 boolean production = false;
@@ -55,6 +58,7 @@ void setup() {
     logDisplayInfo();
     pixelDensity(displayDensity());
 
+    sketchCenter = new PVector(width / 2, height / 2);
 
     // create an instance of the OpenCV library
     cv = new OpenCV(this, width, height);
@@ -66,7 +70,7 @@ void setup() {
     minBlobArea = (width * height) / 512;
     maxBlobArea = (width * height) / 256;
     // 0-1, square + circle have 1
-    // diagonal lines also have this property, unfortunately... 
+    // diagonal lines also have this property, unfortunately...
     minBlobWidthHeightRatio = 0.4;
 
     // not yet implemented
@@ -79,8 +83,8 @@ void setup() {
 
     // start the webcam
     logCameras();
-    // String camId = getCameraIdBySpecs("video1", 1280, 720, 30);
-    String camId = getCameraIdBySpecs("video1", 640, 480, 30);
+    String camId = getCameraIdBySpecs(1280, 720, 30);
+    // String camId = getCameraIdBySpecs("video1", 640, 480, 30);
     if (camId == null) {
       log("Couldn't get camera with spec.");
       camId = getFirstCameraId();
@@ -108,12 +112,18 @@ void draw() {
   // Draw the blobs and the rings
   for (Blob blob : blobs) {
     blob.update();
+    if (debug) {
+      blob.display();
+    }
     if (blob.age % blobSpawnAge == 0) {
       log("Spawning ring from blob", blob.id);
+
       Ring ring = blob.spawnRing();
       ring.setId(ringId.getAndIncrement());
       ring.setMaxAge(maxRingAge);
       ring.setGrowAge(50);
+      ring.setColor(blob.getColor());
+
       rings.add(ring);
     }
     blob.display();
@@ -252,8 +262,24 @@ void setBlob(Blob dest, Blob from) {
   dest.resetTimer();
 }
 
+// returns the angle from v1 to origin in clockwise direction
+// range: [0..90]
+float angleFromOrigin(PVector v1) {
+  PVector origin = new PVector(0, 0);
+  float a = atan2(v1.y, v1.x) - atan2(origin.y, origin.x);
+  if (a < 0) a += TWO_PI;
+  return a;
+}
+
 void addNewBlob(Blob b) {
   b.setId(blobId.getAndIncrement());
+  float angle = degrees(angleFromOrigin(b.getCentroid())); // yes, should do better map
+  color angleColor = color(map(angle, 0, 90, 0, 360), 100, 70, 50);
+  b.setColor(angleColor);
+  b.setFrameTimeout(blobFrameTimeout);
+  if (debug) {
+    log("Angle:", angle);
+  }
   blobs.add(b);
   // log("Found new blob:", b.id);
 }

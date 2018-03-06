@@ -11,6 +11,7 @@ class Ring {
   int growAge = 50;
   float xNoiseOff = 0;
   float yNoiseOff = 0;
+  color rColor;
 
 
   Ring(ArrayList<PVector> pts, ArrayList<PVector> unitVecs, PVector centroid) {
@@ -33,6 +34,10 @@ class Ring {
 
   void setGrowthScale(float scale) {
     growthScale = scale;
+  }
+
+  void setColor(color c) {
+    this.rColor = c;
   }
 
   void shift(PVector amount) {
@@ -63,6 +68,7 @@ class Ring {
     float alpha = map(age, 0, maxAge, 100, 0);
     color c = color(360, 0, 70, alpha);
     fill(c);
+    fill(rColor);
     noStroke();
     beginShape();
     for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
