@@ -4,8 +4,6 @@ Built with [Processing](https://processing.org).
 
 Built in [Creative Programming 2](https://github.com/JeffThompson/CreativeProgramming2).  
 
-
-**Synopsis:**  
 ![Synopsis](./installation/Synopsis.png)   
 
 ## Requirements
