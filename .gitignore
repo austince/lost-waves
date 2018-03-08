@@ -2,3 +2,4 @@
 out
 build
 log.txt
+*.autosave

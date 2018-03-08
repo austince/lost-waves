@@ -7,15 +7,20 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /*
-BLOB DETECTION: WEBCAM
-Austin Cawley-Edwards, Jeff Thompson
+Austin Cawley-Edwards
 
+Help from:
+Jeff Thompson
+Daniel Shiffman
 */
 
 Capture webcam;              // webcam input
 OpenCV cv;                   // instance of the OpenCV library
 SoundFile oceanSound;        // ocean sound to play from each point
                              // Would one day love this to be spatial / positional
+
+Ship ship;
+float shipBoundOffset;
 
 float minBlobArea, maxBlobArea;
 float minBlobWidthHeightRatio;
@@ -33,17 +38,16 @@ float increment = 0.002;    // how quickly to move through noise (0-1)
 PImage bgImage = null; // The background to remove
 int threshold = 60; // for thresholding the image
 
-int sampleRate = 5; // how often to run blob detection
+int sampleRate = 7; // how often to run blob detection
 
-int blobSpawnAge = 600;
-int maxRingAge = 6000;
+int blobSpawnAge = 1000;
+int maxRingAge = 7000;
 int blobFrameTimeout = 25;
-
-PVector sketchCenter;
 
 boolean debug = true;
 boolean production = false;
 boolean drawWebcam = false;
+boolean moveShipWithMouse = false;
 boolean drawCVOutput = false;
 boolean resetBackground = true; // always reset on first run
 
@@ -51,14 +55,10 @@ void setup() {
     size(1280, 720, P3D); // for local
     // size(displayWidth, displayHeight, P3D); // for production
 
-    colorMode(HSB);
-
     setupLogger();
-
     logDisplayInfo();
-    pixelDensity(displayDensity());
 
-    sketchCenter = new PVector(width / 2, height / 2);
+    pixelDensity(displayDensity());
 
     // create an instance of the OpenCV library
     cv = new OpenCV(this, width, height);
@@ -80,11 +80,10 @@ void setup() {
     log("Blob MinArea", minBlobArea);
     log("Blob MaxArea", maxBlobArea);
 
-
     // start the webcam
     logCameras();
-    String camId = getCameraIdBySpecs(1280, 720, 30);
-    // String camId = getCameraIdBySpecs("video1", 640, 480, 30);
+    // String camId = getCameraIdBySpecs(1280, 720, 30);
+    String camId = getCameraIdBySpecs("video1", 640, 480, 30);
     if (camId == null) {
       log("Couldn't get camera with spec.");
       camId = getFirstCameraId();
@@ -94,12 +93,16 @@ void setup() {
     webcam = new Capture(this, camId);
     webcam.start();
 
-    // text settings (for showing the # of blobs)
-    textSize(20);
-    textAlign(LEFT, BOTTOM);
+    log("Loading ship...");
+    ship = new Ship(width / 2, height / 2, -5);
+    ship.getShape().scale(3);
+    shipBoundOffset = 50 * (1280 * 720) / (width * height);
 
     colorMode(HSB, 360, 100, 100);
 
+    // text settings (for showing the # of blobs)
+    textSize(20);
+    textAlign(LEFT);
     noCursor();
 
     frameRate(60);
@@ -126,7 +129,6 @@ void draw() {
 
       rings.add(ring);
     }
-    blob.display();
   }
 
   for (int i = rings.size() - 1; i >= 0; i--) {
@@ -139,6 +141,34 @@ void draw() {
     } else {
       ring.display();
     }
+
+    // Check if ship has entered the ring and apply the forces!
+    if (ring.containsPoint2D(ship.getPosition())) {
+      ship.applyForce(ring.getForce(ship.getPosition()));
+    }
+  }
+
+  // Draw the ship
+  ship.update();
+  ship.display();
+
+  // constrain the ship to the bounds (give/take)
+  PVector shipPos = ship.getPosition();
+  if (shipPos.x > width + shipBoundOffset) {
+    shipPos.x = -shipBoundOffset;
+  } else if (shipPos.x < -shipBoundOffset) {
+    shipPos.x = width + shipBoundOffset;
+  }
+
+  if (shipPos.y > height + shipBoundOffset) {
+    shipPos.y = -shipBoundOffset;
+  } else if (shipPos.y < -shipBoundOffset) {
+    shipPos.y = height + shipBoundOffset;
+  }
+
+  if (moveShipWithMouse) {
+    shipPos.x = mouseX;
+    shipPos.y = mouseY;
   }
 
   String fps = nf(frameRate, 0,2) + " fps";
@@ -146,9 +176,10 @@ void draw() {
     fill(0);
     noStroke();
     text(fps, 50,50);
+    text(ship.getPosition().toString(), 50, 70);
+    text(ship.velocity.toString(), 50, 90);
   }
   logInProd(fps);
-
 
   // don't do any blob detection until a new frame of video is available
   // is available
@@ -192,6 +223,8 @@ void keyPressed() {
     drawWebcam = !drawWebcam;
   } else if (key == 'c' ) {
     drawCVOutput = !drawCVOutput;
+  } else if(key == 'm') {
+    moveShipWithMouse = !moveShipWithMouse;
   } else if (key == CODED) {
     if (keyCode == UP) {
       threshold += 5;
@@ -273,15 +306,12 @@ float angleFromOrigin(PVector v1) {
 
 void addNewBlob(Blob b) {
   b.setId(blobId.getAndIncrement());
-  float angle = degrees(angleFromOrigin(b.getCentroid())); // yes, should do better map
+  // yes, should do better map than mappig an angle to 360 degrees  ....
+  float angle = degrees(angleFromOrigin(b.getCentroid()));
   color angleColor = color(map(angle, 0, 90, 0, 360), 100, 70, 50);
   b.setColor(angleColor);
   b.setFrameTimeout(blobFrameTimeout);
-  if (debug) {
-    log("Angle:", angle);
-  }
   blobs.add(b);
-  // log("Found new blob:", b.id);
 }
 
 /**

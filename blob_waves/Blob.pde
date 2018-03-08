@@ -105,19 +105,19 @@ class Blob {
   * @param blobs - the list of all blobs
   */
   boolean containsAnother(List<Blob> blobs) {
-      for (Blob otherBlob: blobs) {
-          // don't check if it contains itself
-          if (this == otherBlob) {
-              continue;
-          }
-
-          PVector otherCentroid = otherBlob.getCentroid();
-          if (this.contour.containsPoint((int) otherCentroid.x, (int) otherCentroid.y)) {
-              return true;
-          }
+    for (Blob otherBlob: blobs) {
+      // don't check if it contains itself
+      if (this == otherBlob) {
+          continue;
       }
 
-      return false;
+      PVector otherCentroid = otherBlob.getCentroid();
+      if (this.contour.containsPoint((int) otherCentroid.x, (int) otherCentroid.y)) {
+          return true;
+      }
+    }
+
+    return false;
   }
 
   void display() {
