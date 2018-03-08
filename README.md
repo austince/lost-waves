@@ -1,5 +1,5 @@
 <div align="center">
-<img src="./installation/Banner-Title.png" height="400">  
+<img src="./installation/Banner-Title.png">  
 </div>  
 <br><br>
 
@@ -8,7 +8,7 @@ Built in [Creative Programming 2](https://github.com/JeffThompson/CreativeProgra
 
 <br>
 <div align="center">
-<img src="./installation/Synopsis.png"> 
+<img src="./installation/Synopsis.png" height="400"> 
 </div>
 
 ## Requirements
