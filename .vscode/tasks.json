@@ -17,7 +17,7 @@
       },
       "args": [
         "--force",
-        "--sketch=${workspaceRoot}/blob_waves",
+        "--sketch=${workspaceRoot}/lost_waves",
         "--output=${workspaceRoot}/out",
         "--run"
       ]
