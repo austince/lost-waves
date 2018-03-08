@@ -1,4 +1,6 @@
-![Lost Waves](./installation/Banner-Title.png)  
+<div align="center">
+<img src="./installation/Banner-Title.png">
+</div>
 
 Built with [Processing](https://processing.org).  
 
