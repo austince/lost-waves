@@ -16,11 +16,10 @@ class Ring {
 
   PVector centroid;
   float growthScale = 2;
-  float growthScaleY = 2;
   int id = -1;
   int age = 0;
   int maxAge = 1000; // temp
-  int growAge = 50;
+  int growAge = 35;
   float xNoiseOff = 0;
   float yNoiseOff = 0;
   color rColor;
