@@ -47,8 +47,12 @@ Everything involving the installation can be found in the [installation](./insta
 <img src="./installation/Installation-2.png" width="300">
 </div>
 
-## Design Citations
+## Citations
 
+### 3D Objects
+[Poly Sailboat by Google](https://poly.google.com/view/7AOnch2wREC)
+
+### Design 
 <a href="https://www.freepik.com/free-vector/family-silhouettes_725263.htm">Family Silhouettes. Designed by Freepik</a>  
 <a href="https://www.freepik.com/free-vector/icons-set-about-cameras_958833.htm">Camera Icons. Designed by Freepik</a>  
 <a href="https://www.freepik.com/free-vector/business-team-outlines-pack_831669.htm">Business Team Silhouettes. Designed by Freepik</a>
