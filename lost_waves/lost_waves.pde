@@ -225,6 +225,10 @@ void keyPressed() {
     drawCVOutput = !drawCVOutput;
   } else if(key == 'm') {
     moveShipWithMouse = !moveShipWithMouse;
+  } else if (key == 's') {
+    String name = "blob-waves-" + frameCount + ".png";
+    if (debug) name = "debug-" + name;
+    save("../frames/" + name);
   } else if (key == CODED) {
     if (keyCode == UP) {
       threshold += 5;
