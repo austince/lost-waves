@@ -6,11 +6,6 @@
 Built with [Processing](https://processing.org).  
 Built in [Creative Programming 2](https://github.com/JeffThompson/CreativeProgramming2).
 
-<br>
-<div align="center">
-<img src="./installation/Synopsis.png" height="400"> 
-</div>
-
 ## Requirements
 
 * Processing Video Library
