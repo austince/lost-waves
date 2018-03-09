@@ -15,13 +15,11 @@ class Ring {
   MatOfPoint2f mat;
 
   PVector centroid;
-  float growthScale = 2;
+  float growthScale = (float) 1 /  (float) 8;
   int id = -1;
   int age = 0;
-  int maxAge = 1000; // temp
-  int growAge = 35;
-  float xNoiseOff = 0;
-  float yNoiseOff = 0;
+  int maxAge = 1000;
+  int growAge = 1;
   color rColor;
   float mass = 10; // kg?
 
@@ -100,25 +98,19 @@ class Ring {
     if (age % growAge == 0) {
       grow();
     }
+
+    colorMode(HSB, 360, 100, 100);
+    rColor = changeAlpha(rColor, (int) map(age, 0, maxAge, 100, 0));
   }
 
   void display() {
     colorMode(HSB, 360, 100, 100);
-    float maxShift = width * height / 92160; // 10px on 1280 x 720
-    float alpha = map(age, 0, maxAge, 100, 0);
-    color c = color(360, 0, 70, alpha);
-    fill(c);
     fill(rColor);
     noStroke();
     beginShape();
     for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
         PVector pt = points.get(pointIndex);
-        // float xNoise = map(noise(xNoiseOff, yNoiseOff), 0, 1, 0, maxShift);
-        // float yNoise = map(noise(yNoiseOff, xNoiseOff), 0, 1, 0, maxShift);
-        // vertex(pt.x + xNoise, pt.y + yNoise);
         vertex(pt.x, pt.y);
-        xNoiseOff = (xNoiseOff + 0.05);
-        yNoiseOff = (yNoiseOff + 0.01);
     }
     endShape(CLOSE);
   }

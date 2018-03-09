@@ -82,8 +82,8 @@ void setup() {
 
     // start the webcam
     logCameras();
-    // String camId = getCameraIdBySpecs(1280, 720, 30);
-    String camId = getCameraIdBySpecs("video1", 640, 480, 30);
+    String camId = getCameraIdBySpecs(1280, 720, 30);
+    // String camId = getCameraIdBySpecs("video1", 640, 480, 30);
     if (camId == null) {
       log("Couldn't get camera with spec.");
       camId = getFirstCameraId();
@@ -124,7 +124,7 @@ void draw() {
       Ring ring = blob.spawnRing();
       ring.setId(ringId.getAndIncrement());
       ring.setMaxAge(maxRingAge);
-      ring.setGrowAge(50);
+      // ring.setGrowAge(50);
       ring.setColor(blob.getColor());
 
       rings.add(ring);
@@ -148,6 +148,14 @@ void draw() {
     }
   }
 
+  // Pull the ship ever so slightly towards the center
+  PVector centerDir = PVector.sub(
+    ship.getPosition(),
+    new PVector(width / 2, height / 2)
+  ).normalize();
+  fill(0);
+  text(centerDir.toString(), width / 2, height / 4);
+  // ship.applyForce(new PVector())
   // Draw the ship
   ship.update();
   ship.display();

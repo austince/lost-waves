@@ -49,7 +49,7 @@ class Blob {
     updateContour(otherBlob.contour);
   }
 
-  void updateContour(Contour newContour) {
+  private void updateContour(Contour newContour) {
     contour = newContour;
     // quadtruple the approximation
     // contour.setPolygonApproximationFactor(contour.getPolygonApproximationFactor() * 4);
