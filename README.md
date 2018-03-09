@@ -23,7 +23,7 @@ All my sketchbook sketches are in the [sketches](./sketches) folder. They are a 
 
 ## Final Screenshots
 
-They don't quit have the same effect as they would projected onto the surrounding walls, but you get the gist.
+They don't quite have the same effect as they would projected onto the surrounding walls, but you get the gist.
 
 <div align="center">
 <img src="./frames/blob-waves-5193.png" height="400">
@@ -52,7 +52,7 @@ Everything involving the installation can be found in the [installation](./insta
 ### 3D Objects
 [Poly Sailboat by Google](https://poly.google.com/view/7AOnch2wREC)
 
-### Design 
+### Design
 <a href="https://www.freepik.com/free-vector/family-silhouettes_725263.htm">Family Silhouettes. Designed by Freepik</a>  
 <a href="https://www.freepik.com/free-vector/icons-set-about-cameras_958833.htm">Camera Icons. Designed by Freepik</a>  
 <a href="https://www.freepik.com/free-vector/business-team-outlines-pack_831669.htm">Business Team Silhouettes. Designed by Freepik</a>
