@@ -1,5 +1,10 @@
 /**
 All logging utilities
+Would be nice to make a logger class / library for all of Processing to use
+Needs of Processing users (?):
+- simple outputs in development
+- filterable
+- accessible outputs when installed
 */
 
 import java.text.SimpleDateFormat;

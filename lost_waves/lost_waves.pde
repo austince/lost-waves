@@ -63,9 +63,6 @@ void setup() {
     // create an instance of the OpenCV library
     cv = new OpenCV(this, width, height);
 
-    // Set the noise for the ring growth
-    noiseDetail(8, detail);
-
     // For blob filtering
     minBlobArea = (width * height) / 512;
     maxBlobArea = (width * height) / 256;
@@ -124,6 +121,7 @@ void draw() {
       Ring ring = blob.spawnRing();
       ring.setId(ringId.getAndIncrement());
       ring.setMaxAge(maxRingAge);
+      ring.setGrowthScale((float) 1 /  (float) 32);
       // ring.setGrowAge(50);
       ring.setColor(blob.getColor());
 
@@ -150,12 +148,12 @@ void draw() {
 
   // Pull the ship ever so slightly towards the center
   PVector centerDir = PVector.sub(
-    ship.getPosition(),
-    new PVector(width / 2, height / 2)
+    new PVector(width / 2, height / 2, ship.getPosition().z),
+    ship.getPosition()
   ).normalize();
-  fill(0);
-  text(centerDir.toString(), width / 2, height / 4);
-  // ship.applyForce(new PVector())
+  centerDir.mult(.01);
+  ship.applyForce(centerDir);
+
   // Draw the ship
   ship.update();
   ship.display();

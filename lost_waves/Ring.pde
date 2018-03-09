@@ -21,7 +21,7 @@ class Ring {
   int maxAge = 1000;
   int growAge = 1;
   color rColor;
-  float mass = 10; // kg?
+  float mass = 1; // kg?
 
 
   Ring(ArrayList<PVector> pts, ArrayList<PVector> unitVecs, PVector centroid) {
@@ -90,7 +90,7 @@ class Ring {
     pos.z = 0;
     float distToCent = abs(PVector.dist(pos, centroid));
     float vel = distToCent / age;
-    return PVector.sub(pos, centroid).normalize().mult(vel).div(mass); // rough
+    return PVector.sub(pos, centroid).normalize().mult(vel).mult(mass); // rough
   }
 
   void update() {
